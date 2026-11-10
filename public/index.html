@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vanity Dawg — vanity wallet generator</title>
+<meta name="description" content="Grind a Solana or Ethereum wallet address that starts or ends with your letters. Keys are generated on your device and never leave it.">
+<meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://YOUR-DOMAIN.example/assets/embed.png","button":{"title":"Grind my vanity wallet","action":{"type":"launch_miniapp","name":"Vanity Dawg","url":"https://YOUR-DOMAIN.example/","splashImageUrl":"https://YOUR-DOMAIN.example/assets/splash.png","splashBackgroundColor":"#0c0e12"}}}'>
+<meta name="fc:frame" content='{"version":"1","imageUrl":"https://YOUR-DOMAIN.example/assets/embed.png","button":{"title":"Grind my vanity wallet","action":{"type":"launch_miniapp","name":"Vanity Dawg","url":"https://YOUR-DOMAIN.example/","splashImageUrl":"https://YOUR-DOMAIN.example/assets/splash.png","splashBackgroundColor":"#0c0e12"}}}'>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #0c0e12; color: #e8eaf0; padding: 16px; max-width: 560px; margin-inline: auto; }
+  h1 { font-size: 20px; margin: 8px 0 2px; }
+  .sub { color: #9aa3b2; font-size: 13px; margin-bottom: 14px; line-height: 1.45; }
+  .card { background: #151922; border: 1px solid #242b3a; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  label { display: block; font-size: 13px; color: #9aa3b2; margin: 10px 0 6px; }
+  label:first-child { margin-top: 0; }
+  input[type="text"] { width: 100%; padding: 12px; font-size: 17px; border-radius: 10px; border: 1px solid #2c3547; background: #0c0e12; color: #fff; letter-spacing: 1px; }
+  .seg { display: flex; gap: 8px; }
+  .seg button { flex: 1; padding: 11px 6px; font-size: 15px; border-radius: 10px; border: 1px solid #2c3547; background: #0c0e12; color: #c8cedb; cursor: pointer; }
+  .seg button.on { background: #2f6bff; border-color: #2f6bff; color: #fff; font-weight: 600; }
+  .seg3 button { font-size: 14px; }
+  #go { width: 100%; padding: 14px; font-size: 17px; font-weight: 700; border: 0; border-radius: 12px; background: #22c55e; color: #06280f; cursor: pointer; margin-top: 14px; }
+  #go.stop { background: #ef4444; color: #fff; }
+  #go:disabled { opacity: .45; }
+  .hint { font-size: 12.5px; color: #9aa3b2; line-height: 1.5; margin-top: 8px; }
+  .warn { color: #fbbf24; }
+  .err { color: #f87171; font-size: 13.5px; margin-top: 8px; min-height: 18px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 14px; }
+  .stats b { font-variant-numeric: tabular-nums; }
+  .bar { height: 8px; background: #0c0e12; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+  .bar div { height: 100%; width: 0%; background: #2f6bff; transition: width .3s; }
+  .mono { font-family: ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; line-height: 1.55; }
+  .addr { font-size: 15px; font-weight: 600; }
+  .keybox { background: #0c0e12; border: 1px dashed #4b3a12; border-radius: 10px; padding: 10px; margin-top: 6px; }
+  .rowbtns { display: flex; gap: 8px; margin-top: 10px; }
+  .rowbtns button { flex: 1; padding: 10px; font-size: 14px; border-radius: 10px; border: 1px solid #2c3547; background: #1b2130; color: #e8eaf0; cursor: pointer; }
+  details { font-size: 13.5px; color: #c8cedb; line-height: 1.55; }
+  summary { cursor: pointer; font-weight: 600; color: #e8eaf0; }
+  .hidden { display: none; }
+  .found { border-color: #22c55e; }
+  .match { color: #22c55e; font-weight: 700; }
+
+  .fcbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .fcbar .who { font-size: 13.5px; color: #c8cedb; }
+  #addBtn { padding: 9px 12px; font-size: 13.5px; border-radius: 10px; border: 1px solid #2c3547; background: #1b2130; color: #e8eaf0; cursor: pointer; white-space: nowrap; }
+  #unlockBox { border-color: #4b3a12; }
+  #unlockBtn { width: 100%; padding: 12px; font-size: 15.5px; font-weight: 700; border: 0; border-radius: 11px; background: #f59e0b; color: #231300; cursor: pointer; margin-top: 10px; }
+  #unlockBtn:disabled { opacity: .5; }
+  #shareBtn { width: 100%; padding: 12px; font-size: 15.5px; font-weight: 600; border: 1px solid #2f6bff; border-radius: 11px; background: #16233f; color: #cfe0ff; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>🐶 Vanity Dawg</h1>
+<div class="sub">Grind a wallet address that starts or ends with <b>your</b> letters. The key is generated <b>on this device</b> and never sent anywhere — not to us, not to anyone. Free up to 3 letters.</div>
+
+<div class="card hidden" id="fcBar">
+  <div class="fcbar">
+    <div class="who" id="fcHello">Running inside Farcaster ✓</div>
+    <button id="addBtn">＋ Add app</button>
+  </div>
+</div>
+
+<div class="card">
+  <label>Chain</label>
+  <div class="seg" id="chainSeg">
+    <button data-v="sol" class="on">Solana</button>
+    <button data-v="eth">Ethereum</button>
+  </div>
+  <label>Letters (leave empty for a plain random wallet)</label>
+  <input type="text" id="pattern" placeholder="e.g. Dex" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <label>Position</label>
+  <div class="seg seg3" id="posSeg">
+    <button data-v="prefix" class="on">Starts with</button>
+    <button data-v="suffix">Ends with</button>
+  </div>
+  <div class="hint" id="patternHint"></div>
+  <div class="err" id="err"></div>
+  <button id="go">Start generating</button>
+  <div class="hint">Keep this page open and the screen on while it works. Longer patterns take exponentially longer — every extra character is roughly 58× the work on Solana, 16× on Ethereum.</div>
+</div>
+
+<div class="card hidden" id="unlockBox">
+  <div style="font-size:15.5px;font-weight:700;">🔓 Longer patterns are a one-time unlock</div>
+  <div class="hint" id="unlockText"></div>
+  <button id="unlockBtn">Unlock</button>
+  <div class="hint" id="unlockNote"></div>
+</div>
+
+<div class="card hidden" id="progressCard">
+  <div class="stats">
+    <div>Tried: <b id="stTried">0</b></div>
+    <div>Speed: <b id="stRate">–</b></div>
+    <div>Elapsed: <b id="stElapsed">0s</b></div>
+    <div>Expected tries: <b id="stExpected">–</b></div>
+  </div>
+  <div class="bar"><div id="barFill"></div></div>
+  <div class="hint">Progress bar is your chance of having found it by now — luck decides the rest. An average hunt ends around 100%.</div>
+</div>
+
+<div class="card hidden" id="resultCard">
+  <div style="font-size:16px;font-weight:700;">✅ Found it</div>
+  <label>Address (public — safe to share)</label>
+  <div class="mono addr" id="resAddr"></div>
+  <div class="rowbtns"><button id="copyAddr">Copy address</button></div>
+  <label>Private key — this IS the wallet. Anyone who has it, has the money.</label>
+  <div class="keybox mono" id="resKey">••••••••••••••••••••••••••••••••</div>
+  <div class="rowbtns">
+    <button id="revealKey">Reveal private key</button>
+    <button id="copyKey">Copy private key</button>
+  </div>
+  <div class="hint warn" id="importHint"></div>
+  <div class="hint">Save the private key somewhere only you control (password manager or written down offline). Nothing is stored — close the app and it's gone.</div>
+  <div class="rowbtns hidden" id="shareRow"><button id="shareBtn">📣 Cast my find</button></div>
+</div>
+
+<div class="card">
+  <details>
+    <summary>How do I know this is safe?</summary>
+    <p>• Key generation runs entirely on your device — the grinding code is open for anyone to inspect, and the same code ships as a downloadable offline file you can run in Airplane Mode.<br>
+    • The app never receives, transmits, or stores private keys. Payments (for the optional unlock) go wallet-to-wallet on Base; keys are not part of that, ever.<br>
+    • Don't trust — verify: watch your network traffic while it grinds. The only requests are this page itself and, if you tap Unlock or Cast, the Farcaster actions you asked for.</p>
+  </details>
+</div>
+
+<script src="./core.js"></script>
+<script src="./app-ui.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
