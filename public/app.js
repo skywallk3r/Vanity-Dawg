@@ -22640,7 +22640,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     // Your production domain, no protocol, e.g. "vanity.dexmorrow.xyz".
     // Used for the fc:miniapp embed meta URLs. The manifest's
     // accountAssociation signature is bound to this exact string.
-    domain: "YOUR-DOMAIN.example",
+    domain: "vanity-dawg.vercel.app",
     // The EVM address that receives unlock payments (Base USDC).
     // Payments are sent by the user's wallet directly to this address —
     // the app never custodies funds.
